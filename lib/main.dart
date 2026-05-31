@@ -346,12 +346,12 @@ class _StockHomeViewState extends State<StockHomeView> {
     setState(() { _isLoading = true; });
 
     var excel = ex.Excel.createExcel();
-    // அண்ணன் இங்கே எக்செல் ஷீட்டை எர்ரர் வராத மாதிரி க்ளீன் செய்யும் படி மாற்றியமைத்துள்ளேன் தம்பி
     String sheetName = 'Sheet1';
     var sheet = excel[sheetName];
 
+    // அண்ணன் இங்கே செல் வேல்யூக்களை பேக்கேஜ் வெர்ஷனுக்கு ஏற்ப சரியாக மாற்றியுள்ளேன் தம்பி
     for (int col = 0; col < _originalHeaders.length; col++) {
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0), ex.CellValue.withValue(_originalHeaders[col]));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0), ex.TextCellValue(_originalHeaders[col]));
     }
 
     Map<String, int> scannedMap = { for (var item in _stockList) item.barcode : item.quantity };
@@ -364,22 +364,22 @@ class _StockHomeViewState extends State<StockHomeView> {
         String cat = details['category'] ?? 'OTHERS';
         int finalQty = scannedMap.containsKey(sku) ? scannedMap[sku]! : 0;
 
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex), ex.CellValue.withValue(name));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex), ex.CellValue.withValue(sku));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex), ex.CellValue.withValue(price));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex), ex.CellValue.withValue(cat));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex), ex.CellValue.withValue(finalQty));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex), ex.TextCellValue(name));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex), ex.TextCellValue(sku));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex), ex.DoubleCellValue(price));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex), ex.TextCellValue(cat));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex), ex.IntCellValue(finalQty));
         rowIndex++;
       });
     }
 
     for (var item in _stockList) {
       if (!_posProductMaster.containsKey(item.barcode)) {
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex), ex.CellValue.withValue(item.productName));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex), ex.CellValue.withValue(item.barcode));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex), ex.CellValue.withValue(item.purchasePrice));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex), ex.CellValue.withValue(item.category));
-        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex), ex.CellValue.withValue(item.quantity));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex), ex.TextCellValue(item.productName));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex), ex.TextCellValue(item.barcode));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex), ex.DoubleCellValue(item.purchasePrice));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex), ex.TextCellValue(item.category));
+        sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex), ex.IntCellValue(item.quantity));
         rowIndex++;
       }
     }
@@ -402,22 +402,22 @@ class _StockHomeViewState extends State<StockHomeView> {
 
     List<String> outputHeaders = ['Product Name', 'Product Code', 'Unit Price', 'Quantity', 'Total Price', 'Scanned Date Time'];
     for (int i = 0; i < outputHeaders.length; i++) {
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0), ex.CellValue.withValue(outputHeaders[i]));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0), ex.TextCellValue(outputHeaders[i]));
     }
 
     int rowIdx = 1;
     for (var item in _stockList) {
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIdx), ex.CellValue.withValue(item.productName));
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIdx), ex.CellValue.withValue(item.barcode));
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIdx), ex.CellValue.withValue(item.purchasePrice));
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIdx), ex.CellValue.withValue(item.quantity));
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIdx), ex.CellValue.withValue(item.totalValue));
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIdx), ex.CellValue.withValue(item.dateTime));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIdx), ex.TextCellValue(item.productName));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: ex.TextCellValue(item.barcode).value as int), ex.TextCellValue(item.barcode));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIdx), ex.DoubleCellValue(item.purchasePrice));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIdx), ex.IntCellValue(item.quantity));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIdx), ex.DoubleCellValue(item.totalValue));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIdx), ex.TextCellValue(item.dateTime));
       rowIdx++;
     }
 
-    sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIdx + 1), ex.CellValue.withValue('Grand Total Investment:'));
-    sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIdx + 1), ex.CellValue.withValue(_grandTotalStockValue));
+    sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIdx + 1), ex.TextCellValue('Grand Total Investment:'));
+    sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIdx + 1), ex.DoubleCellValue(_grandTotalStockValue));
 
     var fileBytes = excel.save();
     final directory = await getApplicationDocumentsDirectory();

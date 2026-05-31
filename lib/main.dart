@@ -349,7 +349,6 @@ class _StockHomeViewState extends State<StockHomeView> {
     String sheetName = 'Sheet1';
     var sheet = excel[sheetName];
 
-    // அண்ணன் இங்கே செல் வேல்யூக்களை பேக்கேஜ் வெர்ஷனுக்கு ஏற்ப சரியாக மாற்றியுள்ளேன் தம்பி
     for (int col = 0; col < _originalHeaders.length; col++) {
       sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0), ex.TextCellValue(_originalHeaders[col]));
     }
@@ -407,8 +406,9 @@ class _StockHomeViewState extends State<StockHomeView> {
 
     int rowIdx = 1;
     for (var item in _stockList) {
+      // அண்ணன் இங்கே டைப்போ எர்ரரை கச்சிதமாகச் சரிசெய்துவிட்டேன் தம்பி!
       sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIdx), ex.TextCellValue(item.productName));
-      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: ex.TextCellValue(item.barcode).value as int), ex.TextCellValue(item.barcode));
+      sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIdx), ex.TextCellValue(item.barcode));
       sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIdx), ex.DoubleCellValue(item.purchasePrice));
       sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIdx), ex.IntCellValue(item.quantity));
       sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIdx), ex.DoubleCellValue(item.totalValue));

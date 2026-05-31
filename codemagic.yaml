@@ -9,11 +9,15 @@ workflows:
       events:
         - push
     scripts:
+      - name: Generate Android Support Files
+        script: |
+          # விடுபட்ட ஆண்ட்ராய்டு கட்டமைப்பை ஆட்டோமேட்டிக்காக உருவாக்கும் கட்டளை தம்பி
+          flutter create . --platforms=android
       - name: Get Flutter packages
         script: |
           flutter packages pub get
       - name: Build Android APK
         script: |
-          flutter build apk --release
+          flutter build apk --release --no-pub
     artifacts:
       - build/app/outputs/flutter-apk/**.apk

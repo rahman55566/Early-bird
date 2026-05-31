@@ -54,8 +54,15 @@ class StockItem {
       );
 }
 
-class EarlyBirdStockApp extends StatelessWidget {
+class EarlyBirdStockApp extends StatefulWidget {
   const EarlyBirdStockApp({super.key});
+
+  @override
+  State<EarlyBirdStockApp> createState() => _EarlyBirdStockAppState();
+}
+
+class _EarlyBirdStockAppState extends State<EarlyBirdStockApp> {
+  bool _isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +70,9 @@ class EarlyBirdStockApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'EARLY BIRD Stock Book',
       theme: ThemeData(
-        brightness: Brightness.light,
+        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
         primaryColor: const Color(0xFFD32F2F),
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+        scaffoldBackgroundColor: _isDarkMode ? const Color(0xFF121212) : const Color(0xFFF5F5F5),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFFD32F2F),
           foregroundColor: Colors.white,
@@ -78,15 +85,23 @@ class EarlyBirdStockApp extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
-        cardTheme: const CardTheme(color: Colors.white, elevation: 3),
       ),
-      home: const StockHomeView(),
+      home: StockHomeView(
+        isDarkMode: _isDarkMode,
+        onThemeChanged: (val) {
+          setState(() { _isDarkMode = val; });
+        },
+      ),
     );
   }
 }
 
 class StockHomeView extends StatefulWidget {
-  const StockHomeView({super.key});
+  final bool isDarkMode;
+  final ValueChanged<bool> onThemeChanged;
+
+  const StockHomeView({super.key, required this.isDarkMode, required this.onThemeChanged});
+  
   @override
   State<StockHomeView> createState() => _StockHomeViewState();
 }
@@ -96,7 +111,7 @@ class _StockHomeViewState extends State<StockHomeView> {
   List<StockItem> _filteredStockList = [];
   Map<String, Map<String, dynamic>> _posProductMaster = {};
   
-  List<String> _originalHeaders = ['Name', 'SKU', 'Purchase price (including tax)', 'Category', 'Current Stock'];
+  final List<String> _originalHeaders = ['Name', 'SKU', 'Purchase price (including tax)', 'Category', 'Current Stock'];
 
   final _barcodeController = TextEditingController();
   final _nameController = TextEditingController();
@@ -181,7 +196,7 @@ class _StockHomeViewState extends State<StockHomeView> {
           _posProductMaster = tempMaster;
           _isLoading = false;
         });
-        _showSnackBar('Loaded ${_posProductMaster.length} items from POS Template.');
+        _showSnackBar('Loaded ${_posProductMaster.length} items from POS Master.');
       } catch (e) {
         setState(() { _isLoading = false; });
         _showSnackBar('Error loading sheet: $e');
@@ -331,9 +346,9 @@ class _StockHomeViewState extends State<StockHomeView> {
     setState(() { _isLoading = true; });
 
     var excel = ex.Excel.createExcel();
-    var sheet = excel['Sheet1'];
-    excel.updateCell('Sheet1', ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0), 'Temp');
-    sheet.clear();
+    // அண்ணன் இங்கே எக்செல் ஷீட்டை எர்ரர் வராத மாதிரி க்ளீன் செய்யும் படி மாற்றியமைத்துள்ளேன் தம்பி
+    String sheetName = 'Sheet1';
+    var sheet = excel[sheetName];
 
     for (int col = 0; col < _originalHeaders.length; col++) {
       sheet.updateCell(ex.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0), ex.CellValue.withValue(_originalHeaders[col]));
@@ -382,9 +397,8 @@ class _StockHomeViewState extends State<StockHomeView> {
     if (_stockList.isEmpty) return;
 
     var excel = ex.Excel.createExcel();
-    var sheet = excel['Sheet1'];
-    excel.updateCell('Sheet1', ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0), 'Temp');
-    sheet.clear();
+    String sheetName = 'Sheet1';
+    var sheet = excel[sheetName];
 
     List<String> outputHeaders = ['Product Name', 'Product Code', 'Unit Price', 'Quantity', 'Total Price', 'Scanned Date Time'];
     for (int i = 0; i < outputHeaders.length; i++) {
@@ -444,6 +458,10 @@ class _StockHomeViewState extends State<StockHomeView> {
       appBar: AppBar(
         title: const Text('EARLY BIRD Stock Book', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () => widget.onThemeChanged(!widget.isDarkMode),
+          ),
           IconButton(icon: const Icon(Icons.file_upload_outlined), onPressed: _uploadPOSExcel),
           IconButton(icon: const Icon(Icons.refresh_sharp), onPressed: _clearAllStock)
         ],

@@ -29,7 +29,10 @@ workflows:
       - name: Build Android APK
         script: |
           flutter build apk --release --no-pub
+          
+          # தம்பி, பில்ட் ஆன ஏபிகே கோப்பை Codemagic-ன் மெயின் ரூட் பார்வைக்கே கொண்டு வரும் மாஸ்டர் அண்ணன் கட்டளை!
+          mkdir -p build_output
+          cp build/app/outputs/flutter-apk/app-release.apk build_output/Early_Bird_Stock_Book.apk
     artifacts:
-      # தம்பி, ஆப் பில்ட் ஆகி அமர்ந்திருக்கும் சரியான பாதையை அண்ணன் மாற்றி கொடுத்துள்ளேன்!
-      - build/app/outputs/flutter-apk/*.apk
-      - build/app/outputs/apk/release/*.apk
+      # இப்போ இந்த ஃபோல்டரிலிருந்து Codemagic கச்சிதமாக ஆப்பை எடுத்து உங்களிடம் கொடுத்துவிடும்ப்பா!
+      - build_output/*.apk

@@ -11,7 +11,8 @@ workflows:
     scripts:
       - name: Generate Android Support Files
         script: |
-          flutter create . --platforms=android
+          # தம்பி, ஆப் சரியாக ஓபன் ஆக உங்களுடைய பழைய பேக்கேஜ் பெயரிலேயே (com.example.earlybird) புதிய ஃபைல்களை உருவாக்குகிறோம்
+          flutter create . --platforms=android --org com.example
           
       - name: Hard Reset and Ultimate Android Fix
         script: |
@@ -79,6 +80,7 @@ workflows:
           }
 
           android {
+              // தம்பி, இந்த பெயர் 'android/app/src/main/kotlin/com/example/earlybird/MainActivity.kt' ஃபைலில் இருக்கும் பெயருடன் மேட்ச் ஆக வேண்டும்
               namespace "com.example.earlybird"
               compileSdkVersion 34
               compileOptions {

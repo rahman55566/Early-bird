@@ -13,44 +13,96 @@ workflows:
         script: |
           flutter create . --platforms=android
           
-      - name: Fix Android SDK 35 & Kotlin Version
+      - name: Hard Reset and Fix Android Build Configuration
         script: |
-          # 1. Audioplayers கேட்கும் SDK 35 மற்றும் minSdkVersion 21-ஐ லோக்கல் பிராப்பர்ட்டீஸில் லாக் செய்கிறோம்
+          # 1. SDK பதிப்புகளை பிராப்பர்ட்டி ஃபைலில் லாக் செய்கிறோம்
           echo "flutter.compileSdkVersion=35" >> android/local.properties
           echo "flutter.targetSdkVersion=35" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
-          
-          # 2. பிரைமரி ஆப் ஃபைலில் பதிப்புகளை 35 ஆக உயர்த்துகிறோம்
-          if [ -f android/app/build.gradle ]; then
-            sed -i '' 's/compileSdkVersion.*/compileSdkVersion 35/g' android/app/build.gradle || true
-            sed -i '' 's/targetSdkVersion.*/targetSdkVersion 35/g' android/app/build.gradle || true
-            sed -i '' 's/minSdkVersion.*/minSdkVersion 21/g' android/app/build.gradle || true
-            sed -i '' 's/flutter.minSdkVersion.*/21/g' android/app/build.gradle || true
-            
-            # ஆப் லெவலில் டூப்ளிகேட் லைப்ரரிகளை பிளாக் செய்கிறோம்
-            echo "
-            configurations.all {
-                resolutionStrategy {
-                    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
-                    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
-                }
-            }" >> android/app/build.gradle
-          fi
-          
-          # 3. தம்பி, இங்கதான் முக்கிய மாற்றம்! ரூட் build.gradle-இல் Kotlin பதிப்பை 1.8.22 ஆகவும், SDK 35 ஆகவும் வலுக்கட்டாயமாக உயர்த்துகிறோம்!
-          echo "
+
+          # 2. தம்பி, இங்கதான் மேஜிக்! தவறு செய்யும் பழைய ரூட் build.gradle-ஐ முழுமையாக மாற்றி எழுதுகிறோம்
+          cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.8.22'
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:7.3.0'
+                  classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+              }
           }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.buildDir = '../build'
           subprojects {
-              ext.buildToolsVersion = '35.0.0'
+              project.buildDir = "${rootProject.buildDir}/${project.name}"
+              project.evaluationDependsOn(':app')
+              
+              // டூப்ளிகேட் எர்ரர் தரும் பழைய Kotlin லைப்ரரிகளை பிளாக் செய்கிறோம்
               configurations.all {
                   resolutionStrategy {
                       exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
                       exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
                   }
               }
-          }" >> android/build.gradle
+          }
+          tasks.register("clean", Delete) {
+              delete rootProject.buildDir
+          }
+          EOF
+
+          # 3. 'Cannot get property' எர்ரர் தந்த ஆப் லெவல் build.gradle ஃபைலையும் முற்றிலும் எர்ரர் இல்லாத புதிய ஃபைலாக மாற்றி விடுகிறோம்
+          cat << 'EOF' > android/app/build.gradle
+          plugins {
+              id "com.android.application"
+              id "kotlin-android"
+              id "dev.flutter.flutter-gradle-plugin"
+          }
+          android {
+              namespace "com.example.your_app_name" // உங்கள் ஆப் பில்ட் ஆக இது தடையாக இருக்காது தம்பி
+              compileSdkVersion 35
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
+              kotlinOptions {
+                  jvmTarget = '1.8'
+              }
+              sourceSets {
+                  main.java.srcDirs += 'src/main/kotlin'
+              }
+              defaultConfig {
+                  applicationId "com.example.earlybird"
+                  minSdkVersion 21
+                  targetSdkVersion 35
+                  versionCode flutterVersionCode.toInteger()
+                  versionName flutterVersionName
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.debug // டெஸ்டிங் APK என்பதால் டெபக் சைனிங் போதுமானது தம்பி
+                  }
+              }
+          }
+          flutter {
+              source '../..'
+          }
+          dependencies {
+              implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+          }
+          configurations.all {
+              resolutionStrategy {
+                  exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+                  exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+              }
+          }
+          EOF
 
       - name: Get Flutter packages
         script: |
@@ -60,7 +112,7 @@ workflows:
         script: |
           flutter clean
           flutter packages pub get
-          # 4. எர்ரர் இல்லாமல் பில்டு செய்யும் மாஸ்டர் கமாண்ட் தம்பி!
+          # 4. எர்ரர் இல்லாமல் சுத்தமாக பில்ட் ஆகும் இறுதி கமாண்ட்
           flutter build apk --release --no-tree-shake-icons
           
     artifacts:

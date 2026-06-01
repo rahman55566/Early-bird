@@ -15,9 +15,16 @@ workflows:
           
       - name: Fix Android Build Properties
         script: |
+          # 1. ஃப்ளட்டர் சிஸ்டத்திற்கு minSdkVersion 21 என்பதைத் திட்டவட்டமாகத் தெரிவிக்கும் பகுதி
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
+          
+          # 2. தம்பி, இங்கதான் மாஸ்டர் ஸ்ட்ரோக்! ஃப்ளட்டரின் பில்ட் ஸ்கிரிப்ட்டிலேயே minSdkVersion-ஐ 21 ஆக மாற்றுகிறோம்.
+          if [ -f android/app/build.gradle ]; then
+            sed -i '' 's/minSdkVersion.*/minSdkVersion 21/g' android/app/build.gradle || true
+            sed -i '' 's/flutter.minSdkVersion.*/21/g' android/app/build.gradle || true
+          fi
 
       - name: Get Flutter packages
         script: |
@@ -27,7 +34,7 @@ workflows:
         script: |
           flutter clean
           flutter packages pub get
-          # தம்பி, சிக்கல் தந்த அந்த ஒரு கமாண்டை மட்டும் இங்கிருந்து தூக்கியாச்சு!
+          # 3. எந்தத் தடையும் இல்லாமல் பில்ட் செய்யும் பகுதி
           flutter build apk --release --no-tree-shake-icons
           
     artifacts:

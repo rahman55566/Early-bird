@@ -15,12 +15,12 @@ workflows:
           
       - name: Hard Reset and Fix Android Build Configuration
         script: |
-          # 1. SDK பதிப்புகளை பிராப்பர்ட்டி ஃபைலில் லாக் செய்கிறோம்
-          echo "flutter.compileSdkVersion=35" >> android/local.properties
-          echo "flutter.targetSdkVersion=35" >> android/local.properties
+          # 1. ஃப்ளட்டர் டூல்ஸ் மற்றும் AAPT2-க்கு பிடித்த பாதுகாப்பான SDK 34-ஐ லாக் செய்கிறோம்
+          echo "flutter.compileSdkVersion=34" >> android/local.properties
+          echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
 
-          # 2. ரூட் build.gradle-ஐ எர்ரர் இல்லாத புதிய ஃபைலாக மாற்றி எழுதுகிறோம்
+          # 2. ரூட் build.gradle-ஐ மாற்றி எழுதுகிறோம்
           cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.8.22'
@@ -44,6 +44,20 @@ workflows:
               project.buildDir = "${rootProject.buildDir}/${project.name}"
               project.evaluationDependsOn(':app')
               
+              // தம்பி, இங்கதான் ட்ரிக்! பிளகின்கள் (audioplayers) 35 கேட்டாலும், அதை வலுக்கட்டாயமாக 34-க்கு மாற்றுகிறோம்
+              afterEvaluate { project ->
+                  if (project.hasProperty('android')) {
+                      project.android {
+                          compileSdkVersion 34
+                          buildToolsVersion "34.0.0"
+                          defaultConfig {
+                              minSdkVersion 21
+                              targetSdkVersion 34
+                          }
+                      }
+                  }
+              }
+              
               configurations.all {
                   resolutionStrategy {
                       exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
@@ -56,7 +70,7 @@ workflows:
           }
           EOF
 
-          # 3. தம்பி, இங்கதான் இறுதித் திருத்தம்! எர்ரர் தரும் வேரியபிள்களை நீக்கிட்டு நேரடியா வெர்ஷனை செட் பண்ணியாச்சு!
+          # 3. பிரைமரி ஆப் ஃபைலையும் 34-க்கு மாற்றி கச்சிதமாக லாக் செய்கிறோம்
           cat << 'EOF' > android/app/build.gradle
           plugins {
               id "com.android.application"
@@ -66,7 +80,7 @@ workflows:
 
           android {
               namespace "com.example.earlybird"
-              compileSdkVersion 35
+              compileSdkVersion 34
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_1_8
                   targetCompatibility JavaVersion.VERSION_1_8
@@ -80,9 +94,9 @@ workflows:
               defaultConfig {
                   applicationId "com.example.earlybird"
                   minSdkVersion 21
-                  targetSdkVersion 35
-                  versionCode 1          // நேரடியாக எண் கொடுக்கப்பட்டுள்ளது
-                  versionName "1.0.0"    // நேரடியாக டெக்ஸ்ட் கொடுக்கப்பட்டுள்ளது
+                  targetSdkVersion 34
+                  versionCode 1
+                  versionName "1.0.0"
               }
               buildTypes {
                   release {
@@ -100,7 +114,7 @@ workflows:
               resolutionStrategy {
                   exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
                   exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
-                }
+              }
           }
           EOF
 

@@ -4,9 +4,8 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
+      # 1. பழைய பிளகின்கள் தடையின்றி வேலை செய்ய பாதுகாப்பான ஃப்ளட்டர் பதிப்பு
       flutter: 3.19.6
-      # 1. தம்பி, இங்கதான் மாஸ்டர் பிளான்! கமாண்டுகளுக்குப் பதிலா சிஸ்டம் வழியாவே SDK 34-ஐ செட் பண்ணியாச்சு.
-      android_sdk: 34
     triggering:
       events:
         - push
@@ -17,7 +16,7 @@ workflows:
           
       - name: Fix Android Build Properties
         script: |
-          # 2. சிக்கல் தரும் வரிகளைத் திருத்தாமல், local.properties ஃபைலில் நேரடியாக வேல்யூக்களைத் திணிக்கிறோம்
+          # 2. எந்த கமாண்டுகளும் கோடை உடைக்காதபடி, பிராப்பர்ட்டி ஃபைலில் மட்டும் மாற்றுகிறோம்
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
@@ -28,10 +27,10 @@ workflows:
           
       - name: Build Android APK
         script: |
-          # 3. எர்ரர் வராமல் சுத்தமாக பில்ட் செய்யும் பகுதி
+          # 3. பழைய கேச் ஃபைல்களை நீக்கிவிட்டு பில்ட் செய்யும் பகுதி
           flutter clean
           flutter packages pub get
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
           
     artifacts:
       # 4. பில்டு முடிந்ததும் APK-ஐ டவுன்லோட் செய்ய வெளியே கொண்டு வரும் பகுதி

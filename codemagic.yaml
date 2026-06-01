@@ -5,6 +5,8 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: 3.19.6
+      # 1. தம்பி, இங்கதான் மாஸ்டர் பிளான்! கமாண்டுகளுக்குப் பதிலா சிஸ்டம் வழியாவே SDK 34-ஐ செட் பண்ணியாச்சு.
+      android_sdk: 34
     triggering:
       events:
         - push
@@ -13,29 +15,12 @@ workflows:
         script: |
           flutter create . --platforms=android
           
-      - name: Upgrade Android SDK Configuration
+      - name: Fix Android Build Properties
         script: |
-          # சப்-ப்ராஜெக்ட்களை பாதுகாப்பாக 34 மற்றும் 21-க்கு மாற்றுகிறோம்
-          echo "subprojects {
-              afterEvaluate { project ->
-                  if (project.hasProperty('android')) {
-                      project.android {
-                          compileSdkVersion 34
-                          defaultConfig {
-                              minSdkVersion 21
-                              targetSdkVersion 34
-                          }
-                      }
-                  }
-              }
-          }" >> android/build.gradle
-          
-          # இங்குதான் தம்பி எர்ரர் வராதபடி கமாண்டுகளைச் சுத்தமாக மாற்றியிருக்கிறேன்!
-          if [ -f android/app/build.gradle ]; then
-            sed -i '' 's/compileSdkVersion.*/compileSdkVersion 34/g' android/app/build.gradle || true
-            sed -i '' 's/targetSdkVersion.*/targetSdkVersion 34/g' android/app/build.gradle || true
-            sed -i '' 's/minSdkVersion.*/minSdkVersion 21/g' android/app/build.gradle || true
-          fi
+          # 2. சிக்கல் தரும் வரிகளைத் திருத்தாமல், local.properties ஃபைலில் நேரடியாக வேல்யூக்களைத் திணிக்கிறோம்
+          echo "flutter.compileSdkVersion=34" >> android/local.properties
+          echo "flutter.targetSdkVersion=34" >> android/local.properties
+          echo "flutter.minSdkVersion=21" >> android/local.properties
 
       - name: Get Flutter packages
         script: |
@@ -43,9 +28,11 @@ workflows:
           
       - name: Build Android APK
         script: |
+          # 3. எர்ரர் வராமல் சுத்தமாக பில்ட் செய்யும் பகுதி
           flutter clean
           flutter packages pub get
           flutter build apk --release --no-tree-shake-icons
           
     artifacts:
+      # 4. பில்டு முடிந்ததும் APK-ஐ டவுன்லோட் செய்ய வெளியே கொண்டு வரும் பகுதி
       - build/app/outputs/flutter-apk/*.apk

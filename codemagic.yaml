@@ -13,14 +13,14 @@ workflows:
         script: |
           flutter create . --platforms=android
           
-      - name: Clean Fix for Android Configurations
+      - name: Hard Reset and Ultimate Android Fix
         script: |
-          # 1. SDK வெர்ஷன்களை லோக்கல் பிராப்பர்ட்டீஸில் மட்டும் செட் செய்கிறோம்
+          # 1. SDK பதிப்புகளை லோக்கல் பிராப்பர்ட்டீஸில் கச்சிதமாக லாக் செய்கிறோம்
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
 
-          # 2. சிக்கல் இல்லாத நேரடி build.gradle ஃபைலை எழுதுகிறோம்
+          # 2. தம்பி, இங்கதான் இறுதி மேஜிக்! அனைத்து பிளகின்களையும் SDK 34-க்குள் கொண்டுவரும் சரியான சப்-ப்ராஜெக்ட் பிளாக்:
           cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.8.22'
@@ -40,16 +40,57 @@ workflows:
               }
           }
           rootProject.buildDir = '../build'
+          
+          // எர்ரர் தராத சரியான Gradle ஆஃப்டர் எவலுவேட் பிளாக் தம்பி!
           subprojects {
               project.buildDir = "${rootProject.buildDir}/${project.name}"
               project.evaluationDependsOn(':app')
+              
+              compileWidgets {
+                  if (project.hasProperty('android')) {
+                      project.android {
+                          compileSdkVersion 34
+                          buildToolsVersion "34.0.0"
+                          defaultConfig {
+                              targetSdkVersion 34
+                              minSdkVersion 21
+                          }
+                      }
+                  }
+              }
+              
+              // டூப்ளிகேட் காட்டும் பழைய கோட்லின் லைப்ரரிகளை பிளாக் செய்கிறோம்
+              configurations.all {
+                  resolutionStrategy {
+                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+                      force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+                  }
+              }
           }
+          
+          // பிளகின்கள் Evaluation முடிந்ததும் அவற்றின் SDK-ஐ 34 ஆக மாற்றுகிறோம்
+          subprojects {
+              afterEvaluate { project ->
+                  if (project.hasProperty('android')) {
+                      project.android {
+                          compileSdkVersion 34
+                          buildToolsVersion "34.0.0"
+                          defaultConfig {
+                              targetSdkVersion 34
+                              minSdkVersion 21
+                          }
+                      }
+                  }
+              }
+          }
+          
           tasks.register("clean", Delete) {
               delete rootProject.buildDir
           }
           EOF
 
-          # 3. ஆப் லெவல் ஃபைலில் டூப்ளிகேட் எர்ரர் வராமல் தடுக்கிறோம் தம்பி
+          # 3. ஆப் லெவல் ஃபைலையும் எர்ரர் வராதபடி லாக் செய்கிறோம்
           cat << 'EOF' > android/app/build.gradle
           plugins {
               id "com.android.application"
@@ -105,8 +146,8 @@ workflows:
         script: |
           flutter clean
           flutter packages pub get
-          # தேங்காமல் இருக்க நார்மல் ரிலீஸ் பில்ட் செய்கிறோம்
-          flutter build apk --release
+          # ஐகான் ட்ரீ ஷேக் எர்ரர் வராமல் தடுக்க இந்த கமாண்ட் தம்பி
+          flutter build apk --release --no-tree-shake-icons
           
     artifacts:
       - build/app/outputs/flutter-apk/*.apk

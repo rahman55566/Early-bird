@@ -9,12 +9,12 @@ workflows:
       events:
         - push
     scripts:
-      - name: Generate Android Support Files
+      - name: Clean Slate and Generate Fresh Android Module
         script: |
-          # தம்பி, ஆப் சரியாக ஓபன் ஆக உங்களுடைய பழைய பேக்கேஜ் பெயரிலேயே (com.example.earlybird) புதிய ஃபைல்களை உருவாக்குகிறோம்
-          flutter create . --platforms=android --org com.example
+          rm -rf android
+          flutter create . --platforms=android --org com.ziyahurrahman --project-name earlybird
           
-      - name: Hard Reset and Ultimate Android Fix
+      - name: Inject Custom Android Specifications
         script: |
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
@@ -39,11 +39,9 @@ workflows:
               }
           }
           rootProject.buildDir = '../build'
-          
           subprojects {
               project.buildDir = "${rootProject.buildDir}/${project.name}"
           }
-          
           subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
@@ -57,7 +55,6 @@ workflows:
                       }
                   }
               }
-              
               configurations.all {
                   resolutionStrategy {
                       exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
@@ -66,7 +63,6 @@ workflows:
                   }
               }
           }
-          
           tasks.register("clean", Delete) {
               delete rootProject.buildDir
           }
@@ -80,8 +76,7 @@ workflows:
           }
 
           android {
-              // தம்பி, இந்த பெயர் 'android/app/src/main/kotlin/com/example/earlybird/MainActivity.kt' ஃபைலில் இருக்கும் பெயருடன் மேட்ச் ஆக வேண்டும்
-              namespace "com.example.earlybird"
+              namespace "com.ziyahurrahman.earlybird"
               compileSdkVersion 34
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_1_8
@@ -94,7 +89,7 @@ workflows:
                   main.java.srcDirs += 'src/main/kotlin'
               }
               defaultConfig {
-                  applicationId "com.example.earlybird"
+                  applicationId "com.ziyahurrahman.earlybird"
                   minSdkVersion 21
                   targetSdkVersion 34
                   versionCode 1
@@ -119,6 +114,8 @@ workflows:
               }
           }
           EOF
+
+          sed -i '' 's/android:label="earlybird"/android:label="Early Bird"/g' android/app/src/main/AndroidManifest.xml
 
       - name: Get Flutter packages
         script: |

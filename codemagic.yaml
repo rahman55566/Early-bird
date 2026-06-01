@@ -13,14 +13,14 @@ workflows:
         script: |
           flutter create . --platforms=android
           
-      - name: Hard Reset and Fix Android Build Configuration
+      - name: Clean Fix for Android Configurations
         script: |
-          # 1. SDK பதிப்புகளை லோக்கல் பிராப்பர்ட்டீஸில் 34 ஆக லாக் செய்கிறோம்
+          # 1. SDK வெர்ஷன்களை லோக்கல் பிராப்பர்ட்டீஸில் மட்டும் செட் செய்கிறோம்
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
 
-          # 2. ரூட் build.gradle-ஐ எர்ரர் இல்லாத புதிய ஃபைலாக மாற்றி எழுதுகிறோம்
+          # 2. சிக்கல் இல்லாத நேரடி build.gradle ஃபைலை எழுதுகிறோம்
           cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.8.22'
@@ -38,13 +38,6 @@ workflows:
                   google()
                   mavenCentral()
               }
-              configurations.all {
-                  resolutionStrategy {
-                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
-                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
-                      force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-                  }
-              }
           }
           rootProject.buildDir = '../build'
           subprojects {
@@ -56,7 +49,7 @@ workflows:
           }
           EOF
 
-          # 3. பிரைமரி ஆப் ஃபைலையும் 34-க்கு மாற்றி கச்சிதமாக லாக் செய்கிறோம்
+          # 3. ஆப் லெவல் ஃபைலில் டூப்ளிகேட் எர்ரர் வராமல் தடுக்கிறோம் தம்பி
           cat << 'EOF' > android/app/build.gradle
           plugins {
               id "com.android.application"
@@ -112,7 +105,8 @@ workflows:
         script: |
           flutter clean
           flutter packages pub get
-          flutter build apk --release --no-tree-shake-icons
+          # தேங்காமல் இருக்க நார்மல் ரிலீஸ் பில்ட் செய்கிறோம்
+          flutter build apk --release
           
     artifacts:
       - build/app/outputs/flutter-apk/*.apk

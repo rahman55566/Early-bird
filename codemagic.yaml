@@ -15,7 +15,7 @@ workflows:
           
       - name: Upgrade Android SDK Configuration
         script: |
-          # 1. இங்க தான் தம்பி மாத்தியிருக்கேன்: minSdkVersion-ஐ 24 ஆக உயர்த்தியாச்சு!
+          # 1. ஆண்ட்ராய்டு 34 மற்றும் புதிய ஃப்ளட்டர் விதிகளுக்கு ஏற்ப செட்டிங்ஸை மாற்றுதல்
           echo "subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
@@ -42,10 +42,11 @@ workflows:
           
       - name: Build Android APK
         script: |
+          # 2. பழைய கேச் ஃபைல்களை நீக்கிவிட்டு, புதிய கட்டுப்பாடுகளுடன் பில்ட் செய்தல்
           flutter clean
           flutter packages pub get
-          # 2. ஃப்ளட்டர் கேட்கும் வெலிடேஷனைத் தவிர்க்கும் கமாண்டையும் சேர்த்தாச்சு
           flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
           
     artifacts:
+      # 3. பில்ட் முடிந்ததும் APK-ஐ டவுன்லோட் செய்ய உங்களிடம் கொண்டு சேர்க்கும் பகுதி
       - build/app/outputs/flutter-apk/*.apk

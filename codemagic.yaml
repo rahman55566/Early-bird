@@ -4,7 +4,6 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      # 1. பழைய பிளகின்கள் தடையின்றி வேலை செய்ய பாதுகாப்பான ஃப்ளட்டர் பதிப்பு
       flutter: 3.19.6
     triggering:
       events:
@@ -16,7 +15,6 @@ workflows:
           
       - name: Fix Android Build Properties
         script: |
-          # 2. எந்த கமாண்டுகளும் கோடை உடைக்காதபடி, பிராப்பர்ட்டி ஃபைலில் மட்டும் மாற்றுகிறோம்
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
@@ -27,11 +25,10 @@ workflows:
           
       - name: Build Android APK
         script: |
-          # 3. பழைய கேச் ஃபைல்களை நீக்கிவிட்டு பில்ட் செய்யும் பகுதி
           flutter clean
           flutter packages pub get
-          flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
+          # தம்பி, சிக்கல் தந்த அந்த ஒரு கமாண்டை மட்டும் இங்கிருந்து தூக்கியாச்சு!
+          flutter build apk --release --no-tree-shake-icons
           
     artifacts:
-      # 4. பில்டு முடிந்ததும் APK-ஐ டவுன்லோட் செய்ய வெளியே கொண்டு வரும் பகுதி
       - build/app/outputs/flutter-apk/*.apk

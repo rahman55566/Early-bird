@@ -30,9 +30,9 @@ workflows:
         script: |
           flutter build apk --release --no-pub
           
-          # தம்பி, பில்ட் ஆன ஏபிகே கோப்பை Codemagic-ன் மெயின் ரூட் பார்வைக்கே கொண்டு வரும் மாஸ்டர் அண்ணன் கட்டளை!
+          # தம்பி, எந்தப் பாதையில் ஏபிகே உருவானாலும் அதைத் தேடிக் கண்டுபிடிக்கும் அண்ணனின் ஸ்மார்ட் கட்டளை!
           mkdir -p build_output
-          cp build/app/outputs/flutter-apk/app-release.apk build_output/Early_Bird_Stock_Book.apk
+          find build/app/outputs/ -name "*.apk" -exec cp {} build_output/Early_Bird_Stock_Book.apk \;
     artifacts:
       # இப்போ இந்த ஃபோல்டரிலிருந்து Codemagic கச்சிதமாக ஆப்பை எடுத்து உங்களிடம் கொடுத்துவிடும்ப்பா!
       - build_output/*.apk

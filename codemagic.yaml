@@ -15,12 +15,10 @@ workflows:
           
       - name: Hard Reset and Ultimate Android Fix
         script: |
-          # 1. SDK பதிப்புகளை லோக்கல் பிராப்பர்ட்டீஸில் லாக் செய்கிறோம்
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
 
-          # 2. ரூட் build.gradle-ஐ எர்ரர் இல்லாத மிகச் சரியான ஆண்ட்ராய்டு விதிகளுடன் எழுதுகிறோம்
           cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.8.22'
@@ -45,7 +43,6 @@ workflows:
               project.buildDir = "${rootProject.buildDir}/${project.name}"
           }
           
-          # அனைத்து பிளகின்களையும் (Audioplayers உட்பட) வலுக்கட்டாயமாக SDK 34-க்குள் லாக் செய்யும் பகுதி தம்பி!
           subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
@@ -74,7 +71,6 @@ workflows:
           }
           EOF
 
-          # 3. பிரைமரி ஆப் ஃபைலையும் 34-க்கு மாற்றி கச்சிதமாக லாக் செய்கிறோம்
           cat << 'EOF' > android/app/build.gradle
           plugins {
               id "com.android.application"

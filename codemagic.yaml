@@ -15,7 +15,6 @@ workflows:
           
       - name: Upgrade Android SDK Configuration
         script: |
-          # 1. தம்பி, சப்-ப்ராஜெக்ட்களை புதிய SDK 36 மற்றும் minSdkVersion 23-க்கு உயர்த்தும் அண்ணனின் கட்டளை!
           echo "subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
@@ -30,7 +29,6 @@ workflows:
               }
           }" >> android/build.gradle
           
-          # 2. முதன்மை ஆப் கட்டமைப்பிலும் minSdkVersion-ஐ 23 ஆக வலுக்கட்டாயமாக மாற்றுதல்
           if [ -f android/app/build.gradle ]; then
             sed -i '' 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle || true
             sed -i '' 's/targetSdkVersion.*/targetSdkVersion 34/g' android/app/build.gradle || true
@@ -43,14 +41,8 @@ workflows:
           
       - name: Build Android APK
         script: |
-          # 3. ஃப்ளட்டரோட வெலிடேஷனைத் தாண்டி வெற்றிகரமாக பில்ட் செய்யும் மாஸ்டர் கமாண்ட் தம்பி!
           flutter build apk --release --no-pub --no-tree-shake-icons --android-skip-build-dependency-validation
           
-          # 4. பில்ட் ஆன ஏபிகே ஃபைலை Codemagic-க்காகத் தேடி எடுத்து வைக்கும் இடம்
-          mkdir -p build_output
-          find build/app/outputs/ -name "*.apk" -exec cp {} build_output/Early_Bird_Stock_Book.apk \; || true
-          
+    # --- இங்குதான் மாற்றம் செய்யப்பட்டுள்ளது (Corrected line) ---
     artifacts:
-      # இங்கிருந்து Codemagic கச்சிதமாக ஆப்பை எடுத்து உங்களிடம் கொடுத்துவிடும்ப்பா!
-      - build_output/*.apk
       - build/app/outputs/flutter-apk/*.apk

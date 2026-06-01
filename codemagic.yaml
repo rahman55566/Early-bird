@@ -15,12 +15,12 @@ workflows:
           
       - name: Hard Reset and Fix Android Build Configuration
         script: |
-          # 1. ஃப்ளட்டர் டூல்ஸ் மற்றும் AAPT2-க்கு பிடித்த பாதுகாப்பான SDK 34-ஐ லாக் செய்கிறோம்
+          # 1. SDK பதிப்புகளை லோக்கல் பிராப்பர்ட்டீஸில் 34 ஆக லாக் செய்கிறோம்
           echo "flutter.compileSdkVersion=34" >> android/local.properties
           echo "flutter.targetSdkVersion=34" >> android/local.properties
           echo "flutter.minSdkVersion=21" >> android/local.properties
 
-          # 2. ரூட் build.gradle-ஐ மாற்றி எழுதுகிறோம்
+          # 2. தம்பி, இங்கதான் புதிய மாஸ்டர் பிளான்! லூப்களைத் தவிர்த்து குளோபல் ஃபோர்ஸ் (Forced) கமாண்டுகளை எழுதுகிறோம்
           cat << 'EOF' > android/build.gradle
           buildscript {
               ext.kotlin_version = '1.8.22'
@@ -38,32 +38,23 @@ workflows:
                   google()
                   mavenCentral()
               }
+              
+              # அனைத்து சப்-மாடியூல்களையும் குளோபலாகக் கட்டுப்படுத்தும் பகுதி தம்பி!
+              configurations.all {
+                  resolutionStrategy {
+                      # பழைய டூப்ளிகேட் லைப்ரரிகளை பிளாக் செய்கிறோம்
+                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+                      
+                      # புதிய பதிப்புகளில் இருந்து வரும் தேவையற்ற மாடியூல்களை ஃபோர்ஸ் செய்கிறோம்
+                      force "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+                  }
+              }
           }
           rootProject.buildDir = '../build'
           subprojects {
               project.buildDir = "${rootProject.buildDir}/${project.name}"
               project.evaluationDependsOn(':app')
-              
-              // தம்பி, இங்கதான் ட்ரிக்! பிளகின்கள் (audioplayers) 35 கேட்டாலும், அதை வலுக்கட்டாயமாக 34-க்கு மாற்றுகிறோம்
-              afterEvaluate { project ->
-                  if (project.hasProperty('android')) {
-                      project.android {
-                          compileSdkVersion 34
-                          buildToolsVersion "34.0.0"
-                          defaultConfig {
-                              minSdkVersion 21
-                              targetSdkVersion 34
-                          }
-                      }
-                  }
-              }
-              
-              configurations.all {
-                  resolutionStrategy {
-                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
-                      exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
-                  }
-              }
           }
           tasks.register("clean", Delete) {
               delete rootProject.buildDir

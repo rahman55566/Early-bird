@@ -4,7 +4,6 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      # 1. தம்பி, இங்கதான் மாத்தியிருக்கேன்! பழைய பிளகின்கள் வேலை செய்ய Flutter 3.19 பதிப்பிற்கு மாற்றுகிறோம்.
       flutter: 3.19.6
     triggering:
       events:
@@ -16,7 +15,7 @@ workflows:
           
       - name: Upgrade Android SDK Configuration
         script: |
-          # 2. இந்த பதிப்பிற்கு ஏற்றவாறு பாதுகாப்பான SDK 34-ஐ செட் செய்கிறோம்
+          # சப்-ப்ராஜெக்ட்களை பாதுகாப்பாக 34 மற்றும் 21-க்கு மாற்றுகிறோம்
           echo "subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
@@ -31,6 +30,7 @@ workflows:
               }
           }" >> android/build.gradle
           
+          # இங்குதான் தம்பி எர்ரர் வராதபடி கமாண்டுகளைச் சுத்தமாக மாற்றியிருக்கிறேன்!
           if [ -f android/app/build.gradle ]; then
             sed -i '' 's/compileSdkVersion.*/compileSdkVersion 34/g' android/app/build.gradle || true
             sed -i '' 's/targetSdkVersion.*/targetSdkVersion 34/g' android/app/build.gradle || true
@@ -43,11 +43,9 @@ workflows:
           
       - name: Build Android APK
         script: |
-          # 3. கிளீன் செய்துவிட்டு எர்ரர் இல்லாமல் பில்ட் செய்யும் கமாண்ட்
           flutter clean
           flutter packages pub get
           flutter build apk --release --no-tree-shake-icons
           
     artifacts:
-      # 4. பில்டு முடிந்ததும் APK-ஐ டவுன்லோட் செய்ய வெளியே கொண்டு வரும் பகுதி
       - build/app/outputs/flutter-apk/*.apk

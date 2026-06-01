@@ -15,11 +15,12 @@ workflows:
           
       - name: Upgrade Android SDK Configuration
         script: |
+          # SDK 34 மற்றும் minSdkVersion 23 ஆகக் குறைத்து பிளகின்களுடன் ஒத்துப்போக வைக்கிறோம்
           echo "subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
                       project.android {
-                          compileSdkVersion 36
+                          compileSdkVersion 34
                           defaultConfig {
                               minSdkVersion 23
                               targetSdkVersion 34
@@ -30,7 +31,7 @@ workflows:
           }" >> android/build.gradle
           
           if [ -f android/app/build.gradle ]; then
-            sed -i '' 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle || true
+            sed -i '' 's/compileSdkVersion.*/compileSdkVersion 34/g' android/app/build.gradle || true
             sed -i '' 's/targetSdkVersion.*/targetSdkVersion 34/g' android/app/build.gradle || true
             sed -i '' 's/minSdkVersion.*/minSdkVersion 23/g' android/app/build.gradle || true
           fi
@@ -41,8 +42,10 @@ workflows:
           
       - name: Build Android APK
         script: |
-          flutter build apk --release --no-pub --no-tree-shake-icons --android-skip-build-dependency-validation
+          # சுத்தமாக பழைய கேச் ஃபைல்களை நீக்கிவிட்டு பில்ட் செய்கிறோம்
+          flutter clean
+          flutter packages pub get
+          flutter build apk --release --no-tree-shake-icons
           
-    # --- இங்குதான் மாற்றம் செய்யப்பட்டுள்ளது (Corrected line) ---
     artifacts:
       - build/app/outputs/flutter-apk/*.apk

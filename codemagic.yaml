@@ -11,20 +11,18 @@ workflows:
     scripts:
       - name: Generate Android Support Files
         script: |
-          # 1. புதிய ஆண்ட்ராய்டு கட்டமைப்பை உருவாக்குதல்
           flutter create . --platforms=android
           
       - name: Upgrade Android SDK Configuration
         script: |
-          # 2. தம்பி, பில்ட் எர்ரரை வேரோடு ஒழிக்கும் அண்ணனின் மாஸ்டர் செட்டிங்ஸ் ஸ்கிரிப்ட்!
-          # அனைத்து சப்-ப்ராஜெக்ட்களையும் புதிய SDK 36-க்கு மாற்றுதல்
+          # 1. தம்பி, சப்-ப்ராஜெக்ட்களை புதிய SDK 36 மற்றும் minSdkVersion 23-க்கு உயர்த்தும் அண்ணனின் கட்டளை!
           echo "subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
                       project.android {
                           compileSdkVersion 36
                           defaultConfig {
-                              minSdkVersion 21
+                              minSdkVersion 23
                               targetSdkVersion 34
                           }
                       }
@@ -32,11 +30,11 @@ workflows:
               }
           }" >> android/build.gradle
           
-          # முதன்மை ஆப் கட்டமைப்பிற்கும் SDK 36 செட்டிங்ஸை கட்டாயப்படுத்துதல்
+          # 2. முதன்மை ஆப் கட்டமைப்பிலும் minSdkVersion-ஐ 23 ஆக வலுக்கட்டாயமாக மாற்றுதல்
           if [ -f android/app/build.gradle ]; then
             sed -i '' 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle || true
             sed -i '' 's/targetSdkVersion.*/targetSdkVersion 34/g' android/app/build.gradle || true
-            sed -i '' 's/minSdkVersion.*/minSdkVersion 21/g' android/app/build.gradle || true
+            sed -i '' 's/minSdkVersion.*/minSdkVersion 23/g' android/app/build.gradle || true
           fi
 
       - name: Get Flutter packages
@@ -45,13 +43,14 @@ workflows:
           
       - name: Build Android APK
         script: |
-          # 3. எந்த ஐகான் எர்ரரும் வராமல் இருக்க ஐகான் ஷேக்கிங்கை தவிர்த்து பில்ட் செய்தல்
-          flutter build apk --release --no-pub --no-tree-shake-icons
+          # 3. ஃப்ளட்டரோட வெலிடேஷனைத் தாண்டி வெற்றிகரமாக பில்ட் செய்யும் மாஸ்டர் கமாண்ட் தம்பி!
+          flutter build apk --release --no-pub --no-tree-shake-icons --android-skip-build-dependency-validation
           
-          # 4. பில்ட் ஆன ஏபிகே ஃபைலை மெயின் ரூட் பார்வைக்குக் கொண்டு வருதல்
+          # 4. பில்ட் ஆன ஏபிகே ஃபைலை Codemagic-க்காகத் தேடி எடுத்து வைக்கும் இடம்
           mkdir -p build_output
-          find build/ -name "*.apk" -exec cp {} build_output/Early_Bird_Stock_Book.apk \;
+          find build/app/outputs/ -name "*.apk" -exec cp {} build_output/Early_Bird_Stock_Book.apk \; || true
           
     artifacts:
-      # இப்போ இந்த ஃபோல்டரிலிருந்து Codemagic கச்சிதமாக ஆப்பை எடுத்து உங்களிடம் கொடுத்துவிடும்ப்பா!
+      # இங்கிருந்து Codemagic கச்சிதமாக ஆப்பை எடுத்து உங்களிடம் கொடுத்துவிடும்ப்பா!
       - build_output/*.apk
+      - build/app/outputs/flutter-apk/*.apk

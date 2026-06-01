@@ -11,28 +11,47 @@ workflows:
     scripts:
       - name: Generate Android Support Files
         script: |
+          # 1. புதிய ஆண்ட்ராய்டு கட்டமைப்பை உருவாக்குதல்
           flutter create . --platforms=android
-      - name: Bypass Android SDK 36 Compile Issue
+          
+      - name: Upgrade Android SDK Configuration
         script: |
+          # 2. தம்பி, பில்ட் எர்ரரை வேரோடு ஒழிக்கும் அண்ணனின் மாஸ்டர் செட்டிங்ஸ் ஸ்கிரிப்ட்!
+          # அனைத்து சப்-ப்ராஜெக்ட்களையும் புதிய SDK 36-க்கு மாற்றுதல்
           echo "subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
                       project.android {
                           compileSdkVersion 36
+                          defaultConfig {
+                              minSdkVersion 21
+                              targetSdkVersion 34
+                          }
                       }
                   }
               }
           }" >> android/build.gradle
+          
+          # முதன்மை ஆப் கட்டமைப்பிற்கும் SDK 36 செட்டிங்ஸை கட்டாயப்படுத்துதல்
+          if [ -f android/app/build.gradle ]; then
+            sed -i '' 's/compileSdkVersion.*/compileSdkVersion 36/g' android/app/build.gradle || true
+            sed -i '' 's/targetSdkVersion.*/targetSdkVersion 34/g' android/app/build.gradle || true
+            sed -i '' 's/minSdkVersion.*/minSdkVersion 21/g' android/app/build.gradle || true
+          fi
+
       - name: Get Flutter packages
         script: |
           flutter packages pub get
+          
       - name: Build Android APK
         script: |
-          flutter build apk --release --no-pub
+          # 3. எந்த ஐகான் எர்ரரும் வராமல் இருக்க ஐகான் ஷேக்கிங்கை தவிர்த்து பில்ட் செய்தல்
+          flutter build apk --release --no-pub --no-tree-shake-icons
           
-          # தம்பி, எந்தப் பாதையில் ஏபிகே உருவானாலும் அதைத் தேடிக் கண்டுபிடிக்கும் அண்ணனின் ஸ்மார்ட் கட்டளை!
+          # 4. பில்ட் ஆன ஏபிகே ஃபைலை மெயின் ரூட் பார்வைக்குக் கொண்டு வருதல்
           mkdir -p build_output
-          find build/app/outputs/ -name "*.apk" -exec cp {} build_output/Early_Bird_Stock_Book.apk \;
+          find build/ -name "*.apk" -exec cp {} build_output/Early_Bird_Stock_Book.apk \;
+          
     artifacts:
       # இப்போ இந்த ஃபோல்டரிலிருந்து Codemagic கச்சிதமாக ஆப்பை எடுத்து உங்களிடம் கொடுத்துவிடும்ப்பா!
       - build_output/*.apk

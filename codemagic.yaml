@@ -4,26 +4,26 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      flutter: stable
+      # 1. தம்பி, இங்கதான் மாத்தியிருக்கேன்! பழைய பிளகின்கள் வேலை செய்ய Flutter 3.19 பதிப்பிற்கு மாற்றுகிறோம்.
+      flutter: 3.19.6
     triggering:
       events:
         - push
     scripts:
       - name: Generate Android Support Files
         script: |
-          # 1. ஆண்ட்ராய்டு ஃபோல்டரை உருவாக்குகிறது
           flutter create . --platforms=android
           
-      - name: Force Upgrade Android SDK & Fix KGP
+      - name: Upgrade Android SDK Configuration
         script: |
-          # 2. அனைத்து சப்-ப்ராஜெக்ட்களையும் SDK 34 மற்றும் minSdkVersion 24-க்கு மாற்றுகிறது
+          # 2. இந்த பதிப்பிற்கு ஏற்றவாறு பாதுகாப்பான SDK 34-ஐ செட் செய்கிறோம்
           echo "subprojects {
               afterEvaluate { project ->
                   if (project.hasProperty('android')) {
                       project.android {
                           compileSdkVersion 34
                           defaultConfig {
-                              minSdkVersion 24
+                              minSdkVersion 21
                               targetSdkVersion 34
                           }
                       }
@@ -31,17 +31,11 @@ workflows:
               }
           }" >> android/build.gradle
           
-          # 3. முதன்மை ஆப் ஃபைல்களிலும் 24 மற்றும் 34 ஐ வலுக்கட்டாயமாக மாற்றுகிறது
           if [ -f android/app/build.gradle ]; then
             sed -i '' 's/compileSdkVersion.*/compileSdkVersion 34/g' android/app/build.gradle || true
             sed -i '' 's/targetSdkVersion.*/targetSdkVersion 34/g' android/app/build.gradle || true
-            sed -i '' 's/minSdkVersion.*/minSdkVersion 24/g' android/app/build.gradle || true
+            sed -i '' 's/minSdkVersion.*/minSdkVersion 21/g' android/app/build.gradle || true
           fi
-          
-          # 4. Flutter-இன் லேட்டஸ்ட் விதிகளுக்கு ஏற்ப local.properties ஃபைலிலும் மாற்றிவிடுகிறது
-          echo "flutter.minSdkVersion=24" >> android/local.properties
-          echo "flutter.targetSdkVersion=34" >> android/local.properties
-          echo "flutter.compileSdkVersion=34" >> android/local.properties
 
       - name: Get Flutter packages
         script: |
@@ -49,11 +43,11 @@ workflows:
           
       - name: Build Android APK
         script: |
-          # 5. கிளீன் செய்துவிட்டு, எர்ரர்களைத் தவிர்த்து பில்ட் செய்யும் கமாண்ட்
+          # 3. கிளீன் செய்துவிட்டு எர்ரர் இல்லாமல் பில்ட் செய்யும் கமாண்ட்
           flutter clean
           flutter packages pub get
-          flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
+          flutter build apk --release --no-tree-shake-icons
           
     artifacts:
-      # 6. பில்ட் முடிந்ததும் APK-ஐ வெளியே கொண்டு வந்து சேர்க்கும் இடம்
+      # 4. பில்டு முடிந்ததும் APK-ஐ டவுன்லோட் செய்ய வெளியே கொண்டு வரும் பகுதி
       - build/app/outputs/flutter-apk/*.apk
